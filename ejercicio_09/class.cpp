@@ -1,9 +1,10 @@
 // Particion estable alrededor de un pivote
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 class Estructura {
 private:
@@ -62,8 +63,8 @@ public:
     void mostrar() {
         auto& s = *this;
         for (Nodo* actual = s.head; actual; actual = actual->next)
-            std::cout << actual->dato << ' ';
-        std::cout << '\n';
+            cout << actual->dato << ' ';
+        cout << '\n';
     }
 
     const void* nodoEn(int posicion) {
@@ -121,6 +122,6 @@ int main() {
     a.agregar(5); a.particionar(5);
     int uno[]={5}; comprobar(a.coincide(uno,1), "un nodo", fallos);
     a.limpiar();
-    std::cout << "Ejercicio 9: " << fallos << " fallos\n";
+    cout << "Ejercicio 9: " << fallos << " fallos\n";
     return fallos==0 ? 0 : 1;
 }

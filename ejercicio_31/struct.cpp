@@ -1,9 +1,10 @@
 // Ordenar pila con una unica pila auxiliar
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 struct Nodo { int dato; Nodo* next; };
 struct Estructura {
@@ -72,6 +73,6 @@ int main() {
     int dato=77;
     comprobar(!pop(a,dato) && dato==77, "underflow", fallos);
     comprobar(!top(a,dato), "tope vacio", fallos); limpiar(a);
-    std::cout << "Ejercicio 31: " << fallos << " fallos\n";
+    cout << "Ejercicio 31: " << fallos << " fallos\n";
     return fallos==0 ? 0 : 1;
 }

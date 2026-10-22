@@ -1,9 +1,10 @@
 // Intercambio fisico de nodos de lista doble
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 struct Nodo { int dato; Nodo* prev; Nodo* next; };
 struct Estructura {
@@ -85,8 +86,8 @@ bool coincide(Estructura& s, const int datos[], int n) {
 
 void mostrar(Estructura& s) {
     for (Nodo* actual = s.head; actual; actual = actual->next)
-        std::cout << actual->dato << ' ';
-    std::cout << '\n';
+        cout << actual->dato << ' ';
+    cout << '\n';
 }
 
 const void* nodoEn(Estructura& s, int posicion) {
@@ -111,19 +112,19 @@ bool coincideReversa(Estructura& s, const int datos[], int n) {
 }
 
 void mostrarReversa(Estructura& s) {
-    for (Nodo* n=s.tail; n; n=n->prev) std::cout << n->dato << ' ';
-    std::cout << '\n';
+    for (Nodo* n=s.tail; n; n=n->prev) cout << n->dato << ' ';
+    cout << '\n';
 }
 
 bool leerEntero(const char* mensaje, int& valor) {
     while (true) {
-        std::cout << mensaje;
-        if (std::cin >> valor) return true;
-        if (std::cin.eof()) return false;
-        std::cin.clear();
+        cout << mensaje;
+        if (cin >> valor) return true;
+        if (cin.eof()) return false;
+        cin.clear();
         char c;
-        while (std::cin.get(c) && c != '\n') {}
-        std::cout << "Entrada invalida. Escriba un numero entero.\n";
+        while (cin.get(c) && c != '\n') {}
+        cout << "Entrada invalida. Escriba un numero entero.\n";
     }
 }
 
@@ -134,38 +135,38 @@ int main() {
         if (!leerEntero("Cantidad de nodos (0 para lista vacia): ",cantidad)) {
             limpiar(lista); return 1;
         }
-        if (cantidad<0) std::cout << "La cantidad no puede ser negativa.\n";
+        if (cantidad<0) cout << "La cantidad no puede ser negativa.\n";
     } while (cantidad<0);
 
     for (int i=0; i<cantidad; ++i) {
         int valor=0;
-        std::cout << "Nodo " << i+1 << " de " << cantidad << '\n';
+        cout << "Nodo " << i+1 << " de " << cantidad << '\n';
         if (!leerEntero("Valor: ",valor)) { limpiar(lista); return 1; }
         agregar(lista,valor);
     }
-    std::cout << "Lista inicial: "; mostrar(lista);
+    cout << "Lista inicial: "; mostrar(lista);
 
     while (true) {
         int opcion=0;
-        std::cout << "\n1. Intercambiar dos nodos\n0. Salir\n";
+        cout << "\n1. Intercambiar dos nodos\n0. Salir\n";
         if (!leerEntero("Opcion: ",opcion)) { limpiar(lista); return 1; }
         if (opcion==0) break;
-        if (opcion!=1) { std::cout << "Opcion invalida.\n"; continue; }
+        if (opcion!=1) { cout << "Opcion invalida.\n"; continue; }
         int x=0,y=0;
         if (!leerEntero("Primera clave: ",x) ||
             !leerEntero("Segunda clave: ",y)) { limpiar(lista); return 1; }
         if (intercambiar(lista,x,y))
-            std::cout << "Intercambio realizado.\n";
+            cout << "Intercambio realizado.\n";
         else
-            std::cout << "No se intercambio: claves iguales o alguna inexistente.\n";
+            cout << "No se intercambio: claves iguales o alguna inexistente.\n";
         if (!validar(lista)) {
-            std::cout << "Error interno de enlaces.\n";
+            cout << "Error interno de enlaces.\n";
             limpiar(lista); return 1;
         }
-        std::cout << "Lista actual: "; mostrar(lista);
-        std::cout << "Recorrido inverso: "; mostrarReversa(lista);
+        cout << "Lista actual: "; mostrar(lista);
+        cout << "Recorrido inverso: "; mostrarReversa(lista);
     }
     limpiar(lista);
-    std::cout << "Memoria liberada.\n";
+    cout << "Memoria liberada.\n";
     return 0;
 }

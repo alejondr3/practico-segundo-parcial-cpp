@@ -1,9 +1,10 @@
 // Conversion infija a postfija con tokens
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 bool esDigito(char c) { return c >= '0' && c <= '9'; }
 bool esLetra(char c) {
@@ -121,7 +122,7 @@ int main() {
         char* salida=nullptr; const char* error=nullptr;
         bool ok=a.convertir(entradas[i],salida,error);
         comprobar(ok && igualTexto(salida,esperadas[i]), "conversion", fallos);
-        if (ok) std::cout << salida << '\n';
+        if (ok) cout << salida << '\n';
         delete[] salida;
     }
     const char* invalidas[]={"", " ", "(a+b", "a+b)", "a+", "a b", "()",
@@ -136,6 +137,6 @@ int main() {
         delete[] salida;
     }
     a.limpiar();
-    std::cout << "Ejercicio 26: " << fallos << " fallos\n";
+    cout << "Ejercicio 26: " << fallos << " fallos\n";
     return fallos==0 ? 0 : 1;
 }

@@ -5,7 +5,7 @@ Soluciones de los ejercicios **17, 23, 31, 26, 11, 9 y 33**. Cada carpeta contie
 - `struct.cpp`: nodos y estado con `struct`, operaciones mediante funciones externas y liberación explícita.
 - `class.cpp`: nodos y estado privados, métodos públicos, constructor y destructor. Se impide copiar objetos propietarios de memoria para evitar dobles liberaciones.
 
-Los 14 programas usan C++17 y **únicamente `#include <iostream>`**. No usan string, sstream, cctype, cassert, stdexcept ni contenedores STL. La salida usa `std::cout`; el reconocimiento de caracteres, las comparaciones y las pruebas se implementan manualmente. El ejercicio 33 usa un pool de nodos y un arreglo de topes reservados al iniciar; push/pop no reservan memoria.
+Los 14 programas usan C++17 y **únicamente `#include <iostream>`**. No usan string, sstream, cctype, cassert, stdexcept ni contenedores STL. La salida usa `cout`; el reconocimiento de caracteres, las comparaciones y las pruebas se implementan manualmente. El ejercicio 33 usa un pool de nodos y un arreglo de topes reservados al iniciar; push/pop no reservan memoria.
 
 ## Compilar y ejecutar
 
@@ -73,3 +73,5 @@ Las versiones class conservan constructor, destructor y estado privado. Las oper
 Ejecuta cualquiera de sus versiones, ingresa una cantidad no negativa y luego los valores de los nodos. Selecciona 1, escribe las dos claves a intercambiar y revisa el recorrido hacia adelante y hacia atrás. Puedes repetir el intercambio o seleccionar 0 para salir y liberar memoria. Se mantiene la primera aparición de cada clave cuando existen repetidos.
 
 Ejemplo de entradas: `5`, luego `10 20 30 40 50`, luego `1`, `20`, `40`, `0`. El resultado es `10 40 30 20 50`. `probar.py` suministra automáticamente entradas para comprobar ambas versiones interactivas.
+
+Todos los programas declaran `using namespace std;` después de incluir iostream y usan cout/cin sin prefijos.

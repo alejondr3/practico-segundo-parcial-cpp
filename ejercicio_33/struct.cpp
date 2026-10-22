@@ -1,9 +1,10 @@
 // N pilas sobre un pool fijo con lista libre
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 struct Nodo { int dato; int siguiente; };
 struct Estructura {
@@ -131,6 +132,6 @@ int main() {
     comprobar(!push(a,0,1) && !pop(a,0,dato), "pool cero", fallos);
     limpiar(a);
     comprobar(!iniciar(a,0,8) && !iniciar(a,1,-1), "dimensiones invalidas", fallos);
-    std::cout << "Ejercicio 33: " << fallos << " fallos\n";
+    cout << "Ejercicio 33: " << fallos << " fallos\n";
     return fallos==0 ? 0 : 1;
 }

@@ -1,9 +1,10 @@
 // Fusion estable de listas dobles ordenadas
 // Unica biblioteca: iostream. C++17.
 #include <iostream>
+using namespace std;
 
 void comprobar(bool condicion, const char* caso, int& fallos) {
-    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+    if (!condicion) { cout << "FALLO: " << caso << '\n'; ++fallos; }
 }
 class Estructura {
 private:
@@ -80,8 +81,8 @@ public:
     void mostrar() {
         auto& s = *this;
         for (Nodo* actual = s.head; actual; actual = actual->next)
-            std::cout << actual->dato << ' ';
-        std::cout << '\n';
+            cout << actual->dato << ' ';
+        cout << '\n';
     }
 
     const void* nodoEn(int posicion) {
@@ -133,6 +134,6 @@ int main() {
     comprobar(!c.fusionar(a,b), "destino ocupado", fallos); c.limpiar();
     comprobar(!a.fusionar(a,b), "listas distintas", fallos);
     a.limpiar(); b.limpiar();
-    std::cout << "Ejercicio 17: " << fallos << " fallos\n";
+    cout << "Ejercicio 17: " << fallos << " fallos\n";
     return fallos==0 ? 0 : 1;
 }

@@ -1,15 +1,13 @@
 // N pilas sobre un pool fijo con lista libre
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
 class Estructura {
 private:
-struct Nodo { int dato; int siguiente; };
+    struct Nodo { int dato; int siguiente; };
     Nodo* pool = nullptr;
     int* topes = nullptr;
     int cantidad = 0, capacidad = 0, libre = -1;
@@ -21,93 +19,124 @@ public:
 
     void limpiar() {
         auto& s = *this;
-    delete[] s.pool; delete[] s.topes;
-    s.pool=nullptr; s.topes=nullptr; s.cantidad=0; s.capacidad=0; s.libre=-1;
+        delete[] s.pool; delete[] s.topes;
+        s.pool=nullptr; s.topes=nullptr; s.cantidad=0; s.capacidad=0; s.libre=-1;
     }
 
-    void iniciar(int n, int m) {
+    bool iniciar(int n, int m) {
         auto& s = *this;
-    if(n<=0 || m<0) throw std::invalid_argument("N debe ser positivo y M no negativo");
-    if(s.pool || s.topes) throw std::logic_error("Pool ya inicializado");
-    // Ambas reservas ocurren una sola vez por inicializacion.
-    Nodo* nuevoPool=new Nodo[m];
-    int* nuevosTopes=nullptr;
-    try { nuevosTopes=new int[n]; } catch(...) { delete[] nuevoPool; throw; }
-    s.pool=nuevoPool; s.topes=nuevosTopes; s.cantidad=n; s.capacidad=m;
-    for(int i=0;i<n;++i) s.topes[i]=-1;
-    for(int i=0;i<m;++i) s.pool[i].siguiente=(i+1<m ? i+1 : -1);
-    s.libre=(m>0 ? 0 : -1);
+        if (n<=0 || m<0 || s.pool || s.topes) return false;
+        Nodo* nuevoPool=nullptr;
+        int* nuevosTopes=nullptr;
+        try {
+            nuevoPool=new Nodo[m];
+            nuevosTopes=new int[n];
+        } catch (...) {
+            delete[] nuevoPool; delete[] nuevosTopes; return false;
+        }
+        s.pool=nuevoPool; s.topes=nuevosTopes;
+        s.cantidad=n; s.capacidad=m;
+        for (int p=0; p<n; ++p) s.topes[p]=-1;
+        for (int i=0; i<m; ++i) s.pool[i].siguiente=(i+1<m ? i+1 : -1);
+        s.libre=(m>0 ? 0 : -1); return true;
     }
 
-    void validarIndice(int p) {
+    bool indiceValido(int p) {
         auto& s = *this;
-    if(p<0 || p>=s.cantidad) throw std::out_of_range("Indice de pila invalido");
+        return p>=0 && p<s.cantidad;
     }
 
     bool push(int p, int dato) {
         auto& s = *this;
-    s.validarIndice(p);
-    if(s.libre==-1) return false;
-    int i=s.libre; s.libre=s.pool[i].siguiente;
-    s.pool[i].dato=dato; s.pool[i].siguiente=s.topes[p]; s.topes[p]=i;
-    return true;
+        if (!s.indiceValido(p)) return false;
+        if(s.libre==-1) return false;
+        int i=s.libre; s.libre=s.pool[i].siguiente;
+        s.pool[i].dato=dato; s.pool[i].siguiente=s.topes[p]; s.topes[p]=i;
+        return true;
     }
 
     bool pop(int p, int& dato) {
         auto& s = *this;
-    s.validarIndice(p);
-    int i=s.topes[p]; if(i==-1) return false;
-    dato=s.pool[i].dato; s.topes[p]=s.pool[i].siguiente;
-    s.pool[i].siguiente=s.libre; s.libre=i; return true;
+        if (!s.indiceValido(p)) return false;
+        int i=s.topes[p]; if(i==-1) return false;
+        dato=s.pool[i].dato; s.topes[p]=s.pool[i].siguiente;
+        s.pool[i].siguiente=s.libre; s.libre=i; return true;
     }
 
     bool top(int p, int& dato) {
         auto& s = *this;
-    s.validarIndice(p);
-    if(s.topes[p]==-1) return false;
-    dato=s.pool[s.topes[p]].dato; return true;
+        if (!s.indiceValido(p)) return false;
+        if(s.topes[p]==-1) return false;
+        dato=s.pool[s.topes[p]].dato; return true;
     }
 
     bool validar() {
         auto& s = *this;
-    // Diagnostico sin arreglos auxiliares: cada indice debe aparecer exactamente una vez.
-    for(int objetivo=0;objetivo<s.capacidad;++objetivo) {
-        int apariciones=0;
-        for(int cadena=-1;cadena<s.cantidad;++cadena) {
+        if (s.cantidad<0 || s.capacidad<0) return false;
+        if (!s.topes) return !s.pool && s.cantidad==0 && s.capacidad==0 && s.libre==-1;
+        if (!s.pool || s.cantidad==0) return false;
+        // Comprobar incluso las cadenas de un pool de capacidad cero.
+        for (int cadena=-1; cadena<s.cantidad; ++cadena) {
             int actual=(cadena==-1 ? s.libre : s.topes[cadena]), pasos=0;
-            while(actual!=-1) {
-                if(actual<0 || actual>=s.capacidad || ++pasos>s.capacidad) return false;
-                if(actual==objetivo) ++apariciones;
+            while (actual!=-1) {
+                if (actual<0 || actual>=s.capacidad || ++pasos>s.capacidad) return false;
                 actual=s.pool[actual].siguiente;
             }
         }
-        if(apariciones!=1) return false;
-    }
-    return true;
+        for (int objetivo=0; objetivo<s.capacidad; ++objetivo) {
+            int apariciones=0;
+            for (int cadena=-1; cadena<s.cantidad; ++cadena) {
+                int actual=(cadena==-1 ? s.libre : s.topes[cadena]);
+                while (actual!=-1) {
+                    if (actual==objetivo) ++apariciones;
+                    actual=s.pool[actual].siguiente;
+                }
+            }
+            if (apariciones!=1) return false;
+        }
+        return true;
     }
 };
 
 int main() {
-
-    Estructura a; a.iniciar(3,8); int dato=0;
-    for(int i=0;i<8;++i) assert(a.push(i%3,100+i));
-    assert(a.validar()); assert(!a.push(0,999));
-    assert(a.pop(1,dato) && dato==107); assert(a.push(2,999));
-    assert(a.top(2,dato) && dato==999); assert(a.validar());
-    assert(a.pop(2,dato) && dato==999);
-    assert(a.pop(2,dato) && dato==105); assert(a.pop(2,dato) && dato==102);
-    assert(!a.pop(2,dato));
-    assert(a.pop(0,dato) && dato==106); assert(a.pop(0,dato) && dato==103); assert(a.pop(0,dato) && dato==100);
-    assert(a.pop(1,dato) && dato==104); assert(a.pop(1,dato) && dato==101);
-    assert(!a.pop(1,dato)); assert(a.validar());
-    for(int i=0;i<8;++i) assert(a.push(0,i));
-    assert(!a.push(1,99));
-    for(int i=7;i>=0;--i) assert(a.pop(0,dato) && dato==i);
-    bool error=false; try { a.push(3,1); } catch(const std::out_of_range&) { error=true; } assert(error);
-    error=false; try { a.pop(-1,dato); } catch(const std::out_of_range&) { error=true; } assert(error);
-    assert(a.validar()); a.limpiar();
-    a.iniciar(1,0); assert(!a.push(0,1)); assert(!a.pop(0,dato)); a.limpiar();
-    error=false; try { a.iniciar(0,8); } catch(const std::invalid_argument&) { error=true; } assert(error);
-
-    std::cout << "Ejercicio 33 - pruebas correctas\n";
+    int fallos=0;
+    Estructura a;
+    comprobar(a.iniciar(3,8), "iniciar", fallos);
+    for (int i=0; i<8; ++i)
+        comprobar(a.push(i%3,100+i), "llenado", fallos);
+    comprobar(a.validar() && !a.push(0,999), "overflow", fallos);
+    int dato=0;
+    bool ok=a.pop(1,dato);
+    comprobar(ok && dato==107, "retirar de pila 1", fallos);
+    comprobar(a.push(2,999), "reutilizar nodo", fallos);
+    ok=a.top(2,dato); comprobar(ok && dato==999, "consultar tope", fallos);
+    int p2[]={999,105,102};
+    for (int i=0; i<3; ++i) {
+        ok=a.pop(2,dato); comprobar(ok && dato==p2[i], "LIFO pila 2", fallos);
+    }
+    comprobar(!a.pop(2,dato), "underflow", fallos);
+    int p0[]={106,103,100}, p1[]={104,101};
+    for (int i=0; i<3; ++i) {
+        ok=a.pop(0,dato); comprobar(ok && dato==p0[i], "LIFO pila 0", fallos);
+    }
+    for (int i=0; i<2; ++i) {
+        ok=a.pop(1,dato); comprobar(ok && dato==p1[i], "LIFO pila 1", fallos);
+    }
+    comprobar(a.validar(), "todos los nodos conservados", fallos);
+    for (int i=0; i<8; ++i) comprobar(a.push(0,i), "una pila usa todo", fallos);
+    comprobar(!a.push(1,99), "pool lleno con pila vacia", fallos);
+    for (int i=7; i>=0; --i) {
+        ok=a.pop(0,dato); comprobar(ok && dato==i, "vaciar", fallos);
+    }
+    dato=55;
+    comprobar(!a.push(3,1) && !a.pop(-1,dato) && dato==55,
+               "indices invalidos", fallos);
+    comprobar(!a.iniciar(3,8), "doble inicializacion", fallos);
+    a.limpiar(); a.limpiar();
+    comprobar(a.iniciar(1,0) && a.validar(), "capacidad cero", fallos);
+    comprobar(!a.push(0,1) && !a.pop(0,dato), "pool cero", fallos);
+    a.limpiar();
+    comprobar(!a.iniciar(0,8) && !a.iniciar(1,-1), "dimensiones invalidas", fallos);
+    std::cout << "Ejercicio 33: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

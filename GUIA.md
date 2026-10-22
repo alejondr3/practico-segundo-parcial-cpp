@@ -33,7 +33,7 @@ Borde: head -> 7 <- tail; retorna true sin cambiar enlaces
 Borde vacío: retorna true
 ```
 
-No se reserva memoria durante la verificación. Las pruebas comparan `huella` antes/después, incluyendo direcciones, enlaces y datos, para verificar restauración exacta. Incluyen casos pares, impares, no palíndromos, vacío, un nodo, dos distintos y repetidos.
+No se reserva memoria durante la verificación. Las pruebas comparan `nodoEn` y `enlaceEn` antes/después, además de los datos con `coincide`, para verificar restauración exacta sin string ni flujos de texto. Incluyen casos pares, impares, no palíndromos, vacío, un nodo, dos distintos y repetidos.
 
 ## 17 — Fusión doble
 
@@ -78,7 +78,7 @@ Borde: a^b^c -> a b c ^ ^
 Error: (a+b -> apertura sin cierre; liberar toda la pila
 ```
 
-La pila contiene operadores pendientes; cada apertura actúa como barrera. Cada nodo se libera al desapilar; ante error se limpia y se relanza la excepción. Las pruebas incluyen los cuatro escenarios del práctico, módulo, identificadores, precedencia, asociatividad, paréntesis anidados y doce entradas inválidas. Tras cada error se verifica que la misma estructura puede convertir otra expresión.
+La pila contiene operadores pendientes; cada apertura actúa como barrera. Cada nodo se libera al desapilar; ante error sintáctico se limpia, se libera el buffer temporal, se devuelve false y se entrega un mensaje mediante un puntero a texto constante. Las pruebas incluyen los cuatro escenarios del práctico, módulo, identificadores, precedencia, asociatividad, paréntesis anidados y doce entradas inválidas. Tras cada error se verifica que la misma estructura puede convertir otra expresión.
 
 ## 31 — Ordenar pila
 
@@ -91,7 +91,7 @@ Final original: tope -> 1 -> 2 -> 3 -> 3 -> 4 -> 7 -> 9
 Borde: tope = null; ambas fases terminan sin operaciones
 ```
 
-Solo se utilizan las interfaces push/pop/top/vacia. Push crea un nodo y pop libera uno; no se mantienen nodos retirados. El costo cuadrático proviene de las reinserciones. Pruebas: ejemplo con repetidos, vacío, uno, negativos, orden ascendente/descendente y underflow.
+Solo se utilizan las interfaces push/pop/top/vacia; pop y top devuelven bool y escriben el dato por referencia. Push crea un nodo y pop libera uno; no se mantienen nodos retirados. El costo cuadrático proviene de las reinserciones. Pruebas: ejemplo con repetidos, vacío, uno, negativos, orden ascendente/descendente y underflow.
 
 ## 33 — Pool de N pilas
 
@@ -110,4 +110,8 @@ Borde lleno: libre=-1; push devuelve false
 Borde pila vacía: tope=-1; pop devuelve false
 ```
 
-Se reserva una vez el arreglo de M nodos y una vez el arreglo de N topes. Se liberan ambos al finalizar. El verificador recorre las cadenas sin reservar memoria y comprueba pertenencia única de cada índice; es diagnóstico, no parte de push/pop. Pruebas: N=3/M=8, llenado intercalado, overflow, reutilización, LIFO de cada pila, underflow, una pila consume todo el pool, índices inválidos, capacidad cero y N inválido.
+iniciar devuelve bool y reserva una vez el arreglo de M nodos y una vez el arreglo de N topes. Se liberan ambos al finalizar. El verificador recorre las cadenas sin reservar memoria y comprueba pertenencia única de cada índice; es diagnóstico, no parte de push/pop. Pruebas: N=3/M=8, llenado intercalado, overflow, reutilización, LIFO de cada pila, underflow, una pila consume todo el pool, índices inválidos, capacidad cero y N inválido.
+
+## Única biblioteca
+
+Todos los programas incluyen solo `<iostream>`. `comprobar` sustituye a assert; las comparaciones se hacen con funciones propias y arreglos de datos esperados. Las funciones con entradas inválidas devuelven false según su contrato.

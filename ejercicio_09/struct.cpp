@@ -1,12 +1,10 @@
 // Particion estable alrededor de un pivote
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
 struct Nodo { int dato; Nodo* next; };
 struct Estructura {
     Nodo* head = nullptr;
@@ -14,9 +12,12 @@ struct Estructura {
 };
 void agregar(Estructura& s, int valor);
 void limpiar(Estructura& s);
-std::string texto(Estructura& s);
-std::string huella(Estructura& s);
 void particionar(Estructura& s, int x);
+bool coincide(Estructura& s, const int datos[], int n);
+void mostrar(Estructura& s);
+const void* nodoEn(Estructura& s, int posicion);
+const void* enlaceEn(Estructura& s, int posicion);
+bool validar(Estructura& s);
 
 void agregar(Estructura& s, int valor) {
     Nodo* n = new Nodo{valor, nullptr};
@@ -27,18 +28,6 @@ void agregar(Estructura& s, int valor) {
 void limpiar(Estructura& s) {
     while (s.head) { Nodo* n = s.head; s.head = n->next; delete n; }
     s.tail = nullptr;
-}
-
-std::string texto(Estructura& s) {
-    std::ostringstream out;
-    for (Nodo* n=s.head; n; n=n->next) { if(n!=s.head) out << ' '; out << n->dato; }
-    return out.str();
-}
-
-std::string huella(Estructura& s) {
-    std::ostringstream out;
-    for (Nodo* n=s.head; n; n=n->next) out << n << ':' << n->next << ':' << n->dato << ';';
-    out << s.tail; return out.str();
 }
 
 void particionar(Estructura& s, int x) {
@@ -60,20 +49,72 @@ void particionar(Estructura& s, int x) {
     if(mayor) { if(s.tail) s.tail->next=mayor; else s.head=mayor; s.tail=finMayor; }
 }
 
+bool coincide(Estructura& s, const int datos[], int n) {
+    Nodo* actual = s.head;
+    for (int i = 0; i < n; ++i) {
+        if (!actual || actual->dato != datos[i]) return false;
+        actual = actual->next;
+    }
+    return actual == nullptr;
+}
+
+void mostrar(Estructura& s) {
+    for (Nodo* actual = s.head; actual; actual = actual->next)
+        std::cout << actual->dato << ' ';
+    std::cout << '\n';
+}
+
+const void* nodoEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 ? nullptr : actual;
+}
+
+const void* enlaceEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 || !actual ? nullptr : actual->next;
+}
+
+bool validar(Estructura& s) {
+    Nodo *lento=s.head, *rapido=s.head;
+    while (rapido && rapido->next) {
+        lento=lento->next; rapido=rapido->next->next;
+        if (lento==rapido) return false;
+    }
+    Nodo* ultimo=nullptr;
+    for (Nodo* n=s.head; n; n=n->next) ultimo=n;
+    return ultimo==s.tail && ((s.head==nullptr)==(s.tail==nullptr));
+}
+
 int main() {
-
+    int fallos=0;
     Estructura a;
-    for(int x : {3,5,8,5,10,2,1,5,7}) agregar(a,x);
-    particionar(a,5); assert(texto(a)=="3 2 1 5 5 5 8 10 7");
-    std::cout << texto(a) << '\n'; limpiar(a);
-    particionar(a,5); assert(texto(a).empty());
-    for(int x : {1,2,3}) agregar(a,x);
-    auto antes=huella(a); particionar(a,5); assert(huella(a)==antes); limpiar(a);
-    for(int x : {5,5,5}) agregar(a,x);
-    antes=huella(a); particionar(a,5); assert(huella(a)==antes); limpiar(a);
-    for(int x : {8,9,10}) agregar(a,x);
-    antes=huella(a); particionar(a,5); assert(huella(a)==antes); limpiar(a);
-    agregar(a,5); particionar(a,5); assert(texto(a)=="5"); limpiar(a);
-
-    std::cout << "Ejercicio 9 - pruebas correctas\n";
+    int datos[] = {3,5,8,5,10,2,1,5,7};
+    for (int i=0; i<9; ++i) agregar(a,datos[i]);
+    const void* originales[9];
+    for (int i=0; i<9; ++i) originales[i]=nodoEn(a,i);
+    particionar(a,5);
+    int esperado[] = {3,2,1,5,5,5,8,10,7};
+    int orden[] = {0,5,6,1,3,7,2,4,8};
+    comprobar(coincide(a,esperado,9) && validar(a), "particion", fallos);
+    for (int i=0; i<9; ++i)
+        comprobar(nodoEn(a,i)==originales[orden[i]], "estabilidad", fallos);
+    mostrar(a); limpiar(a); particionar(a,5);
+    comprobar(validar(a) && coincide(a,nullptr,0), "vacia", fallos);
+    for (int grupo=0; grupo<3; ++grupo) {
+        int x = grupo==0 ? 2 : (grupo==1 ? 5 : 8);
+        for (int i=0; i<3; ++i) agregar(a,x);
+        const void* ids[3];
+        for (int i=0; i<3; ++i) ids[i]=nodoEn(a,i);
+        particionar(a,5);
+        for (int i=0; i<3; ++i)
+            comprobar(nodoEn(a,i)==ids[i], "grupo unico", fallos);
+        comprobar(validar(a), "enlaces", fallos); limpiar(a);
+    }
+    agregar(a,5); particionar(a,5);
+    int uno[]={5}; comprobar(coincide(a,uno,1), "un nodo", fallos);
+    limpiar(a);
+    std::cout << "Ejercicio 9: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

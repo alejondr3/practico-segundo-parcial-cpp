@@ -1,12 +1,10 @@
 // Palindromo restaurando la lista
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
 struct Nodo { int dato; Nodo* next; };
 struct Estructura {
     Nodo* head = nullptr;
@@ -14,10 +12,13 @@ struct Estructura {
 };
 void agregar(Estructura& s, int valor);
 void limpiar(Estructura& s);
-std::string texto(Estructura& s);
-std::string huella(Estructura& s);
 Nodo* invertir(Estructura& s, Nodo* inicio);
 bool palindromo(Estructura& s);
+bool coincide(Estructura& s, const int datos[], int n);
+void mostrar(Estructura& s);
+const void* nodoEn(Estructura& s, int posicion);
+const void* enlaceEn(Estructura& s, int posicion);
+bool validar(Estructura& s);
 
 void agregar(Estructura& s, int valor) {
     Nodo* n = new Nodo{valor, nullptr};
@@ -28,18 +29,6 @@ void agregar(Estructura& s, int valor) {
 void limpiar(Estructura& s) {
     while (s.head) { Nodo* n = s.head; s.head = n->next; delete n; }
     s.tail = nullptr;
-}
-
-std::string texto(Estructura& s) {
-    std::ostringstream out;
-    for (Nodo* n=s.head; n; n=n->next) { if(n!=s.head) out << ' '; out << n->dato; }
-    return out.str();
-}
-
-std::string huella(Estructura& s) {
-    std::ostringstream out;
-    for (Nodo* n=s.head; n; n=n->next) out << n << ':' << n->next << ':' << n->dato << ';';
-    out << s.tail; return out.str();
 }
 
 Nodo* invertir(Estructura& s, Nodo* inicio) {
@@ -62,20 +51,65 @@ bool palindromo(Estructura& s) {
     return resultado;
 }
 
+bool coincide(Estructura& s, const int datos[], int n) {
+    Nodo* actual = s.head;
+    for (int i = 0; i < n; ++i) {
+        if (!actual || actual->dato != datos[i]) return false;
+        actual = actual->next;
+    }
+    return actual == nullptr;
+}
+
+void mostrar(Estructura& s) {
+    for (Nodo* actual = s.head; actual; actual = actual->next)
+        std::cout << actual->dato << ' ';
+    std::cout << '\n';
+}
+
+const void* nodoEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 ? nullptr : actual;
+}
+
+const void* enlaceEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 || !actual ? nullptr : actual->next;
+}
+
+bool validar(Estructura& s) {
+    Nodo *lento=s.head, *rapido=s.head;
+    while (rapido && rapido->next) {
+        lento=lento->next; rapido=rapido->next->next;
+        if (lento==rapido) return false;
+    }
+    Nodo* ultimo=nullptr;
+    for (Nodo* n=s.head; n; n=n->next) ultimo=n;
+    return ultimo==s.tail && ((s.head==nullptr)==(s.tail==nullptr));
+}
+
 int main() {
-
+    int fallos=0;
     Estructura a;
-    assert(palindromo(a));
-    for(int x : {1,2,3,2,1}) agregar(a,x);
-    auto h=huella(a); assert(palindromo(a)); assert(h==huella(a)); limpiar(a);
-    for(int x : {1,2,2,1}) agregar(a,x);
-    h=huella(a); assert(palindromo(a)); assert(h==huella(a)); limpiar(a);
-    for(int x : {1,2,3,4}) agregar(a,x);
-    h=huella(a); assert(!palindromo(a)); assert(h==huella(a)); limpiar(a);
-    agregar(a,7); h=huella(a); assert(palindromo(a)); assert(h==huella(a)); limpiar(a);
-    agregar(a,1); agregar(a,2); h=huella(a); assert(!palindromo(a)); assert(h==huella(a)); limpiar(a);
-    for(int x : {9,9,9}) agregar(a,x);
-    h=huella(a); assert(palindromo(a)); assert(h==huella(a)); limpiar(a);
-
-    std::cout << "Ejercicio 11 - pruebas correctas\n";
+    int casos[7][5]={{1,2,3,2,1},{1,2,2,1,0},{1,2,3,4,0},
+                     {7,0,0,0,0},{0,0,0,0,0},{1,2,0,0,0},{9,9,9,0,0}};
+    int tamanos[]={5,4,4,1,0,2,3};
+    bool respuestas[]={true,true,false,true,true,false,true};
+    for (int c=0; c<7; ++c) {
+        for (int i=0; i<tamanos[c]; ++i) agregar(a,casos[c][i]);
+        const void* ids[5]; const void* enlaces[5];
+        for (int i=0; i<tamanos[c]; ++i) {
+            ids[i]=nodoEn(a,i); enlaces[i]=enlaceEn(a,i);
+        }
+        bool resultado=palindromo(a);
+        comprobar(resultado==respuestas[c], "palindromo", fallos);
+        comprobar(coincide(a,casos[c],tamanos[c]) && validar(a), "restaurar", fallos);
+        for (int i=0; i<tamanos[c]; ++i)
+            comprobar(nodoEn(a,i)==ids[i] && enlaceEn(a,i)==enlaces[i],
+                       "identidad y enlaces", fallos);
+        limpiar(a);
+    }
+    std::cout << "Ejercicio 11: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

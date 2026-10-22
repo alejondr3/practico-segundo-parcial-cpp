@@ -1,15 +1,13 @@
 // Ordenar pila con una unica pila auxiliar
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
 class Estructura {
 private:
-struct Nodo { int dato; Nodo* next; };
+    struct Nodo { int dato; Nodo* next; };
     Nodo* tope = nullptr;
 public:
     Estructura() = default;
@@ -19,60 +17,67 @@ public:
 
     void push(int x) {
         auto& s = *this;
-    s.tope=new Nodo{x,s.tope};
+        s.tope=new Nodo{x,s.tope};
+    }
+
+    bool top(int& dato) {
+        auto& s = *this;
+        if (!s.tope) return false;
+        dato=s.tope->dato; return true;
+    }
+
+    bool pop(int& dato) {
+        auto& s = *this;
+        if (!s.tope) return false;
+        Nodo* n=s.tope; dato=n->dato; s.tope=n->next; delete n;
+        return true;
     }
 
     bool vacia() {
         auto& s = *this;
-    return s.tope==nullptr;
-    }
-
-    int top() {
-        auto& s = *this;
-    if(!s.tope) throw std::underflow_error("Pila vacia");
-    return s.tope->dato;
-    }
-
-    int pop() {
-        auto& s = *this;
-    if(!s.tope) throw std::underflow_error("Pila vacia");
-    Nodo* n=s.tope; int x=n->dato; s.tope=n->next; delete n; return x;
+        return s.tope==nullptr;
     }
 
     void limpiar() {
         auto& s = *this;
-    while(s.tope) { Nodo* n=s.tope; s.tope=n->next; delete n; }
+        while (s.tope) { Nodo* n=s.tope; s.tope=n->next; delete n; }
     }
 
     void ordenar() {
         auto& s = *this;
-    Estructura auxiliar;
-    // La auxiliar queda con el mayor en el tope.
-    while(!s.vacia()) {
-        int actual=s.pop();
-        while(!auxiliar.vacia() && auxiliar.top()>actual) s.push(auxiliar.pop());
-        auxiliar.push(actual);
-    }
-    while(!auxiliar.vacia()) s.push(auxiliar.pop());
+        Estructura auxiliar;
+        int actual=0, superior=0;
+        while (s.pop(actual)) {
+            while (auxiliar.top(superior) && superior>actual) {
+                auxiliar.pop(superior); s.push(superior);
+            }
+            auxiliar.push(actual);
+        }
+        while (auxiliar.pop(actual)) s.push(actual);
     }
 };
 
 int main() {
-
+    int fallos=0;
     Estructura a;
-    for(int x : {4,1,7,3,3,9,2}) a.push(x);
-    a.ordenar();
-    for(int esperado : {1,2,3,3,4,7,9}) { int obtenido=a.pop(); assert(obtenido==esperado); std::cout << obtenido << ' '; }
-    std::cout << '\n'; assert(a.vacia()); a.ordenar();
-    a.push(8); a.ordenar(); assert(a.pop()==8);
-    for(int x : {-2,-2,-5,0}) a.push(x);
-    a.ordenar(); for(int x : {-5,-2,-2,0}) assert(a.pop()==x);
-    for(int x : {1,2,3}) a.push(x);
-    a.ordenar(); for(int x : {1,2,3}) assert(a.pop()==x);
-    for(int x : {3,2,1}) a.push(x);
-    a.ordenar(); for(int x : {1,2,3}) assert(a.pop()==x);
-    bool error=false; try { a.pop(); } catch(const std::underflow_error&) { error=true; } assert(error);
-    a.limpiar();
-
-    std::cout << "Ejercicio 31 - pruebas correctas\n";
+    int casos[5][7]={{4,1,7,3,3,9,2},{8,0,0,0,0,0,0},
+                      {-2,-2,-5,0,0,0,0},{1,2,3,0,0,0,0},{3,2,1,0,0,0,0}};
+    int esperado[5][7]={{1,2,3,3,4,7,9},{8,0,0,0,0,0,0},
+                         {-5,-2,-2,0,0,0,0},{1,2,3,0,0,0,0},{1,2,3,0,0,0,0}};
+    int tamanos[]={7,1,4,3,3};
+    a.ordenar(); comprobar(a.vacia(), "vacia", fallos);
+    for (int c=0; c<5; ++c) {
+        for (int i=0; i<tamanos[c]; ++i) a.push(casos[c][i]);
+        a.ordenar();
+        for (int i=0; i<tamanos[c]; ++i) {
+            int dato=0; bool ok=a.pop(dato);
+            comprobar(ok && dato==esperado[c][i], "orden menor arriba", fallos);
+        }
+        comprobar(a.vacia(), "sin nodos sobrantes", fallos);
+    }
+    int dato=77;
+    comprobar(!a.pop(dato) && dato==77, "underflow", fallos);
+    comprobar(!a.top(dato), "tope vacio", fallos); a.limpiar();
+    std::cout << "Ejercicio 31: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

@@ -1,12 +1,23 @@
 // Conversion infija a postfija con tokens
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
+bool esDigito(char c) { return c >= '0' && c <= '9'; }
+bool esLetra(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+}
+bool esEspacio(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f';
+}
+bool igualTexto(const char* a, const char* b) {
+    if (!a || !b) return a == b;
+    int i = 0;
+    while (a[i] && a[i] == b[i]) ++i;
+    return a[i] == b[i];
+}
 struct Nodo { char dato; Nodo* next; };
 struct Estructura {
     Nodo* tope = nullptr;
@@ -15,15 +26,16 @@ void push(Estructura& s, char x);
 char pop(Estructura& s);
 void limpiar(Estructura& s);
 int prioridad(Estructura& s, char c);
-std::string convertir(Estructura& s, const std::string& infija);
+bool convertir(Estructura& s, const char* infija, char*& salida, const char*& error);
 
 void push(Estructura& s, char x) {
     s.tope=new Nodo{x,s.tope};
 }
 
 char pop(Estructura& s) {
-    if(!s.tope) throw std::underflow_error("Pila vacia");
-    Nodo* n=s.tope; char x=n->dato; s.tope=n->next; delete n; return x;
+    if (!s.tope) return '\0';
+    Nodo* n=s.tope; char c=n->dato;
+    s.tope=n->next; delete n; return c;
 }
 
 void limpiar(Estructura& s) {
@@ -38,67 +50,86 @@ int prioridad(Estructura& s, char c) {
     return 0;
 }
 
-std::string convertir(Estructura& s, const std::string& infija) {
-    limpiar(s);
-    std::ostringstream salida;
+bool convertir(Estructura& s, const char* infija, char*& salida, const char*& error) {
+    limpiar(s); salida=nullptr; error=nullptr;
+    if (!infija) { error="Entrada nula"; return false; }
+    int largo=0;
+    while (infija[largo]) ++largo;
+    char* temporal=new char[2*largo+1];
+    int usados=0, i=0;
     bool esperaOperando=true, hayToken=false;
-    try {
-        for(std::size_t i=0;i<infija.size();) {
-            unsigned char c=static_cast<unsigned char>(infija[i]);
-            if(std::isspace(c)) { ++i; continue; }
-            hayToken=true;
-            if(std::isdigit(c) || std::isalpha(c) || c=='_') {
-                if(!esperaOperando) throw std::invalid_argument("Falta operador entre operandos");
-                std::size_t inicio=i++;
-                if(std::isdigit(c)) {
-                    while(i<infija.size() && std::isdigit(static_cast<unsigned char>(infija[i]))) ++i;
-                } else {
-                    while(i<infija.size() && (std::isalnum(static_cast<unsigned char>(infija[i])) || infija[i]=='_')) ++i;
-                }
-                salida << infija.substr(inicio,i-inicio) << ' '; esperaOperando=false;
-            } else if(c=='(') {
-                if(!esperaOperando) throw std::invalid_argument("Falta operador antes de parentesis");
-                push(s,'('); ++i;
-            } else if(c==')') {
-                if(esperaOperando) throw std::invalid_argument("Parentesis vacio o falta operando");
-                while(s.tope && s.tope->dato!='(') salida << pop(s) << ' ';
-                if(!s.tope) throw std::invalid_argument("Parentesis de cierre sin apertura");
-                pop(s); ++i; esperaOperando=false;
-            } else if(prioridad(s,static_cast<char>(c))) {
-                if(esperaOperando) throw std::invalid_argument("Falta operando; operadores unarios no incluidos");
-                while(s.tope && s.tope->dato!='(' &&
-                     (prioridad(s,s.tope->dato)>prioridad(s,static_cast<char>(c)) ||
-                     (prioridad(s,s.tope->dato)==prioridad(s,static_cast<char>(c)) && c!='^')))
-                    salida << pop(s) << ' ';
-                push(s,static_cast<char>(c)); ++i; esperaOperando=true;
-            } else throw std::invalid_argument("Caracter no permitido");
-        }
-        if(!hayToken || esperaOperando) throw std::invalid_argument("Expresion vacia o incompleta");
-        while(s.tope) {
-            char c=pop(s);
-            if(c=='(') throw std::invalid_argument("Parentesis de apertura sin cierre");
-            salida << c << ' ';
-        }
-    } catch(...) { limpiar(s); throw; }
-    std::string resultado=salida.str(); resultado.pop_back(); return resultado;
+    while (i<largo && !error) {
+        char c=infija[i];
+        if (esEspacio(c)) { ++i; continue; }
+        hayToken=true;
+        if (esDigito(c) || esLetra(c)) {
+            if (!esperaOperando) { error="Falta operador"; break; }
+            int inicio=i++;
+            if (esDigito(c)) {
+                while (esDigito(infija[i])) ++i;
+            } else {
+                while (esLetra(infija[i]) || esDigito(infija[i])) ++i;
+            }
+            for (int k=inicio; k<i; ++k) temporal[usados++]=infija[k];
+            temporal[usados++]=' '; esperaOperando=false;
+        } else if (c=='(') {
+            if (!esperaOperando) { error="Falta operador antes de ("; break; }
+            push(s,c); ++i;
+        } else if (c==')') {
+            if (esperaOperando) { error="Falta operando antes de )"; break; }
+            while (s.tope && s.tope->dato!='(') {
+                temporal[usados++]=pop(s); temporal[usados++]=' ';
+            }
+            if (!s.tope) { error="Cierre sin apertura"; break; }
+            pop(s); ++i;
+        } else if (prioridad(s,c)>0) {
+            if (esperaOperando) { error="Falta operando; sin unarios"; break; }
+            while (s.tope && s.tope->dato!='(' &&
+                  (prioridad(s,s.tope->dato)>prioridad(s,c) ||
+                  (prioridad(s,s.tope->dato)==prioridad(s,c) && c!='^'))) {
+                temporal[usados++]=pop(s); temporal[usados++]=' ';
+            }
+            push(s,c); ++i; esperaOperando=true;
+        } else error="Caracter no permitido";
+    }
+    if (!error && (!hayToken || esperaOperando)) error="Expresion incompleta";
+    while (!error && s.tope) {
+        char c=pop(s);
+        if (c=='(') error="Apertura sin cierre";
+        else { temporal[usados++]=c; temporal[usados++]=' '; }
+    }
+    limpiar(s);
+    if (error) { delete[] temporal; return false; }
+    temporal[usados-1]='\0'; salida=temporal;
+    return true;
 }
 
 int main() {
-
+    int fallos=0;
     Estructura a;
-    assert(convertir(a,"12 + x * (7 - 3)^2")=="12 x 7 3 - 2 ^ * +");
-    assert(convertir(a,"a^b^c")=="a b c ^ ^");
-    assert(convertir(a,"10/(5-5)")=="10 5 5 - /");
-    assert(convertir(a,"foo_2 % 12 + 3*4")=="foo_2 12 % 3 4 * +");
-    assert(convertir(a,"a-b-c")=="a b - c -");
-    assert(convertir(a,"((42))")=="42");
-    for(const char* invalida : {"", " ", "(a+b", "a+b)", "a+", "a b", "()", "2(x)", "a**b", "12x", "a@b", "-3"}) {
-        bool error=false;
-        try { convertir(a,invalida); } catch(const std::invalid_argument&) { error=true; }
-        assert(error);
-        assert(convertir(a,"1+2")=="1 2 +");
+    const char* entradas[]={"12 + x * (7 - 3)^2", "a^b^c", "10/(5-5)",
+                            "foo_2 % 12 + 3*4", "a-b-c", "((42))"};
+    const char* esperadas[]={"12 x 7 3 - 2 ^ * +", "a b c ^ ^", "10 5 5 - /",
+                             "foo_2 12 % 3 4 * +", "a b - c -", "42"};
+    for (int i=0; i<6; ++i) {
+        char* salida=nullptr; const char* error=nullptr;
+        bool ok=convertir(a,entradas[i],salida,error);
+        comprobar(ok && igualTexto(salida,esperadas[i]), "conversion", fallos);
+        if (ok) std::cout << salida << '\n';
+        delete[] salida;
     }
-    std::cout << convertir(a,"12 + x * (7 - 3)^2") << '\n'; limpiar(a);
-
-    std::cout << "Ejercicio 26 - pruebas correctas\n";
+    const char* invalidas[]={"", " ", "(a+b", "a+b)", "a+", "a b", "()",
+                             "2(x)", "a**b", "12x", "a@b", "-3", nullptr};
+    for (int i=0; i<13; ++i) {
+        char* salida=nullptr; const char* error=nullptr;
+        bool ok=convertir(a,invalidas[i],salida,error);
+        comprobar(!ok && !salida && error, "expresion invalida", fallos);
+        delete[] salida;
+        ok=convertir(a,"1+2",salida,error);
+        comprobar(ok && igualTexto(salida,"1 2 +"), "reusar tras error", fallos);
+        delete[] salida;
+    }
+    limpiar(a);
+    std::cout << "Ejercicio 26: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

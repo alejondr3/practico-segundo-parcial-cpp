@@ -1,12 +1,10 @@
 // Intercambio fisico de nodos de lista doble
-// C++17. Ejecutar sin argumentos para correr las pruebas.
+// Unica biblioteca: iostream. C++17.
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <cassert>
-#include <cctype>
 
+void comprobar(bool condicion, const char* caso, int& fallos) {
+    if (!condicion) { std::cout << "FALLO: " << caso << '\n'; ++fallos; }
+}
 struct Nodo { int dato; Nodo* prev; Nodo* next; };
 struct Estructura {
     Nodo* head = nullptr;
@@ -14,11 +12,14 @@ struct Estructura {
 };
 void agregar(Estructura& s, int valor);
 void limpiar(Estructura& s);
-std::string texto(Estructura& s);
-std::string reversa(Estructura& s);
 bool validar(Estructura& s);
 const void* identidad(Estructura& s, int clave);
 bool intercambiar(Estructura& s, int x, int y);
+bool coincide(Estructura& s, const int datos[], int n);
+void mostrar(Estructura& s);
+const void* nodoEn(Estructura& s, int posicion);
+const void* enlaceEn(Estructura& s, int posicion);
+bool coincideReversa(Estructura& s, const int datos[], int n);
 
 void agregar(Estructura& s, int valor) {
     Nodo* n=new Nodo{valor,s.tail,nullptr};
@@ -29,18 +30,6 @@ void agregar(Estructura& s, int valor) {
 void limpiar(Estructura& s) {
     while (s.head) { Nodo* n = s.head; s.head = n->next; delete n; }
     s.tail = nullptr;
-}
-
-std::string texto(Estructura& s) {
-    std::ostringstream out;
-    for (Nodo* n=s.head; n; n=n->next) { if(n!=s.head) out << ' '; out << n->dato; }
-    return out.str();
-}
-
-std::string reversa(Estructura& s) {
-    std::ostringstream out;
-    for(Nodo* n=s.tail;n;n=n->prev) { if(n!=s.tail) out << ' '; out << n->dato; }
-    return out.str();
 }
 
 bool validar(Estructura& s) {
@@ -85,22 +74,69 @@ bool intercambiar(Estructura& s, int x, int y) {
     return true;
 }
 
+bool coincide(Estructura& s, const int datos[], int n) {
+    Nodo* actual = s.head;
+    for (int i = 0; i < n; ++i) {
+        if (!actual || actual->dato != datos[i]) return false;
+        actual = actual->next;
+    }
+    return actual == nullptr;
+}
+
+void mostrar(Estructura& s) {
+    for (Nodo* actual = s.head; actual; actual = actual->next)
+        std::cout << actual->dato << ' ';
+    std::cout << '\n';
+}
+
+const void* nodoEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 ? nullptr : actual;
+}
+
+const void* enlaceEn(Estructura& s, int posicion) {
+    Nodo* actual = s.head;
+    for (int i = 0; actual && i < posicion; ++i) actual = actual->next;
+    return posicion < 0 || !actual ? nullptr : actual->next;
+}
+
+bool coincideReversa(Estructura& s, const int datos[], int n) {
+    Nodo* actual=s.tail;
+    for (int i=n-1; i>=0; --i) {
+        if (!actual || actual->dato!=datos[i]) return false;
+        actual=actual->prev;
+    }
+    return actual==nullptr;
+}
+
 int main() {
-
+    int fallos=0;
     Estructura a;
-    for(int x : {1,2,3,4,5,6,7,8}) agregar(a,x);
-    const void* dos=identidad(a,2); const void* siete=identidad(a,7);
-    assert(intercambiar(a,2,7)); assert(texto(a)=="1 7 3 4 5 6 2 8");
-    assert(identidad(a,2)==dos && identidad(a,7)==siete && validar(a));
-    assert(intercambiar(a,1,8)); assert(texto(a)=="8 7 3 4 5 6 2 1" && validar(a));
-    assert(intercambiar(a,4,5)); assert(texto(a)=="8 7 3 5 4 6 2 1" && validar(a));
-    assert(intercambiar(a,5,4)); assert(validar(a));
-    assert(intercambiar(a,5,4)); assert(texto(a)=="8 7 3 5 4 6 2 1" && validar(a));
-    auto antes=texto(a); assert(!intercambiar(a,99,1)); assert(texto(a)==antes);
-    assert(!intercambiar(a,1,1)); std::cout << texto(a) << '\n'; limpiar(a);
-    assert(!intercambiar(a,1,2)); agregar(a,1); assert(!intercambiar(a,1,2)); limpiar(a);
-    agregar(a,1); agregar(a,2); assert(intercambiar(a,2,1));
-    assert(texto(a)=="2 1" && reversa(a)=="1 2" && validar(a)); limpiar(a);
-
-    std::cout << "Ejercicio 23 - pruebas correctas\n";
+    for (int i=1; i<=8; ++i) agregar(a,i);
+    const void* dos=identidad(a,2);
+    const void* siete=identidad(a,7);
+    bool ok=intercambiar(a,2,7);
+    int e1[]={1,7,3,4,5,6,2,8};
+    comprobar(ok && coincide(a,e1,8) && coincideReversa(a,e1,8), "separados", fallos);
+    comprobar(identidad(a,2)==dos && identidad(a,7)==siete, "mismos nodos", fallos);
+    comprobar(validar(a), "enlaces", fallos); mostrar(a);
+    ok=intercambiar(a,1,8);
+    int e2[]={8,7,3,4,5,6,2,1};
+    comprobar(ok && coincide(a,e2,8) && validar(a), "extremos", fallos);
+    ok=intercambiar(a,4,5);
+    int e3[]={8,7,3,5,4,6,2,1};
+    comprobar(ok && coincide(a,e3,8) && validar(a), "adyacentes", fallos);
+    ok=intercambiar(a,4,5);
+    comprobar(ok && coincide(a,e2,8) && validar(a), "adyacencia inversa", fallos);
+    comprobar(!intercambiar(a,99,1) && coincide(a,e2,8), "clave ausente", fallos);
+    comprobar(!intercambiar(a,1,1), "claves iguales", fallos); limpiar(a);
+    comprobar(!intercambiar(a,1,2), "lista vacia", fallos);
+    agregar(a,1); comprobar(!intercambiar(a,1,2), "un nodo", fallos);
+    agregar(a,2); ok=intercambiar(a,2,1);
+    int e4[]={2,1};
+    comprobar(ok && coincide(a,e4,2) && coincideReversa(a,e4,2) && validar(a),
+               "dos nodos", fallos); limpiar(a);
+    std::cout << "Ejercicio 23: " << fallos << " fallos\n";
+    return fallos==0 ? 0 : 1;
 }

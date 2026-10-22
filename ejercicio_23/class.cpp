@@ -114,35 +114,63 @@ public:
         }
         return actual==nullptr;
     }
+    void mostrarReversa() {
+        for (Nodo* n=tail; n; n=n->prev) std::cout << n->dato << ' ';
+        std::cout << '\n';
+    }
 };
 
+bool leerEntero(const char* mensaje, int& valor) {
+    while (true) {
+        std::cout << mensaje;
+        if (std::cin >> valor) return true;
+        if (std::cin.eof()) return false;
+        std::cin.clear();
+        char c;
+        while (std::cin.get(c) && c != '\n') {}
+        std::cout << "Entrada invalida. Escriba un numero entero.\n";
+    }
+}
+
 int main() {
-    int fallos=0;
-    Estructura a;
-    for (int i=1; i<=8; ++i) a.agregar(i);
-    const void* dos=a.identidad(2);
-    const void* siete=a.identidad(7);
-    bool ok=a.intercambiar(2,7);
-    int e1[]={1,7,3,4,5,6,2,8};
-    comprobar(ok && a.coincide(e1,8) && a.coincideReversa(e1,8), "separados", fallos);
-    comprobar(a.identidad(2)==dos && a.identidad(7)==siete, "mismos nodos", fallos);
-    comprobar(a.validar(), "enlaces", fallos); a.mostrar();
-    ok=a.intercambiar(1,8);
-    int e2[]={8,7,3,4,5,6,2,1};
-    comprobar(ok && a.coincide(e2,8) && a.validar(), "extremos", fallos);
-    ok=a.intercambiar(4,5);
-    int e3[]={8,7,3,5,4,6,2,1};
-    comprobar(ok && a.coincide(e3,8) && a.validar(), "adyacentes", fallos);
-    ok=a.intercambiar(4,5);
-    comprobar(ok && a.coincide(e2,8) && a.validar(), "adyacencia inversa", fallos);
-    comprobar(!a.intercambiar(99,1) && a.coincide(e2,8), "clave ausente", fallos);
-    comprobar(!a.intercambiar(1,1), "claves iguales", fallos); a.limpiar();
-    comprobar(!a.intercambiar(1,2), "lista vacia", fallos);
-    a.agregar(1); comprobar(!a.intercambiar(1,2), "un nodo", fallos);
-    a.agregar(2); ok=a.intercambiar(2,1);
-    int e4[]={2,1};
-    comprobar(ok && a.coincide(e4,2) && a.coincideReversa(e4,2) && a.validar(),
-               "dos nodos", fallos); a.limpiar();
-    std::cout << "Ejercicio 23: " << fallos << " fallos\n";
-    return fallos==0 ? 0 : 1;
+    Estructura lista;
+    int cantidad=0;
+    do {
+        if (!leerEntero("Cantidad de nodos (0 para lista vacia): ",cantidad)) {
+            lista.limpiar(); return 1;
+        }
+        if (cantidad<0) std::cout << "La cantidad no puede ser negativa.\n";
+    } while (cantidad<0);
+
+    for (int i=0; i<cantidad; ++i) {
+        int valor=0;
+        std::cout << "Nodo " << i+1 << " de " << cantidad << '\n';
+        if (!leerEntero("Valor: ",valor)) { lista.limpiar(); return 1; }
+        lista.agregar(valor);
+    }
+    std::cout << "Lista inicial: "; lista.mostrar();
+
+    while (true) {
+        int opcion=0;
+        std::cout << "\n1. Intercambiar dos nodos\n0. Salir\n";
+        if (!leerEntero("Opcion: ",opcion)) { lista.limpiar(); return 1; }
+        if (opcion==0) break;
+        if (opcion!=1) { std::cout << "Opcion invalida.\n"; continue; }
+        int x=0,y=0;
+        if (!leerEntero("Primera clave: ",x) ||
+            !leerEntero("Segunda clave: ",y)) { lista.limpiar(); return 1; }
+        if (lista.intercambiar(x,y))
+            std::cout << "Intercambio realizado.\n";
+        else
+            std::cout << "No se intercambio: claves iguales o alguna inexistente.\n";
+        if (!lista.validar()) {
+            std::cout << "Error interno de enlaces.\n";
+            lista.limpiar(); return 1;
+        }
+        std::cout << "Lista actual: "; lista.mostrar();
+        std::cout << "Recorrido inverso: "; lista.mostrarReversa();
+    }
+    lista.limpiar();
+    std::cout << "Memoria liberada.\n";
+    return 0;
 }

@@ -26,7 +26,7 @@ Para compilar y comprobar los 14 programas con Python y g++ instalados:
 python probar.py
 ```
 
-Los `main` contienen los datos del práctico y pruebas adicionales. La función propia `comprobar` cuenta y muestra los fallos; no usa `assert`. Cada programa devuelve 0 si las pruebas pasan y 1 si fallan. Para ensayar otros datos se modifican esos casos en `main`. Los arreglos de los casos de prueba no son memoria auxiliar de las operaciones sobre listas/pilas.
+Los `main` de los ejercicios 9, 11, 17, 26, 31 y 33 contienen los datos del práctico y pruebas adicionales. **El ejercicio 23 es interactivo:** pide cantidad y valores iniciales, luego permite intercambiar las claves elegidas mediante un menú (1 intercambiar, 0 salir). La función propia `comprobar` cuenta y muestra los fallos; no usa `assert`. Cada programa devuelve 0 si las pruebas pasan y 1 si fallan. Para ensayar otros datos se modifican esos casos en `main`. Los arreglos de los casos de prueba no son memoria auxiliar de las operaciones sobre listas/pilas.
 
 ## Ejercicios
 
@@ -67,3 +67,9 @@ El PDF original no se incluye en el repositorio.
 - 33: `indiceValido` es una comprobación propia; no se usan excepciones de biblioteca. El `catch (...)` de inicialización libera reservas parciales si falla `new[]`.
 
 Las versiones class conservan constructor, destructor y estado privado. Las operaciones centrales mantienen sus restricciones de punteros y complejidad.
+
+## Ejercicio 23: datos por teclado
+
+Ejecuta cualquiera de sus versiones, ingresa una cantidad no negativa y luego los valores de los nodos. Selecciona 1, escribe las dos claves a intercambiar y revisa el recorrido hacia adelante y hacia atrás. Puedes repetir el intercambio o seleccionar 0 para salir y liberar memoria. Se mantiene la primera aparición de cada clave cuando existen repetidos.
+
+Ejemplo de entradas: `5`, luego `10 20 30 40 50`, luego `1`, `20`, `40`, `0`. El resultado es `10 40 30 20 50`. `probar.py` suministra automáticamente entradas para comprobar ambas versiones interactivas.
